@@ -11,7 +11,7 @@ A GitHub Action to bump latest submodule changes triggered by comment in pull re
 ## Usage
 
 To trigger action you need to add a commen to opened pull request with the command.
-This command has the following template:
+This command has the following syntax:
 ```
 /bump:{submodule_path}:{bump_branch}
 ```
@@ -24,21 +24,23 @@ Parameter | Explanation
 
 ### Examples
 
-#### 1. Run command **without** explicit bump branch:
-    ```
-    /bump:client
-    ```
-    ![image](https://user-images.githubusercontent.com/41733560/110045907-79de3100-7d5c-11eb-8497-7689e0b238b1.png)
+#### Run command **without** explicit bump branch
+ ```
+ /bump:client
+ ```
+    
+ ![image](https://user-images.githubusercontent.com/41733560/110045907-79de3100-7d5c-11eb-8497-7689e0b238b1.png)
 
-    This command will fetch the latest code changes in the host repository, navigate to `client` submodule directory, rebase **default** (`master`) branch, commit and push submodule changes to the host repository.
+ This command will fetch the latest code changes in the host repository, navigate to `client` submodule directory, rebase **default** (`master`) branch, commit and push submodule changes to the host repository.
 
-#### 2. Run command with custom bump branch:
-    ```
-    /bump:client:main
-    ```
-    ![image](https://user-images.githubusercontent.com/41733560/110046306-d7727d80-7d5c-11eb-9e3a-9bb8a05f9f7d.png)
+#### Run command with custom bump branch
+ ```   
+ /bump:client:main
+ ```   
 
-    This command will fetch the latest code changes in the host repository, navigate to `client` submodule directory, rebase **custom** (`main`) branch, commit and push submodule changes to the host repository.
+ ![image](https://user-images.githubusercontent.com/41733560/110046306-d7727d80-7d5c-11eb-9e3a-9bb8a05f9f7d.png)
+
+ This command will fetch the latest code changes in the host repository, navigate to `client` submodule directory, rebase **custom** (`main`) branch, commit and push submodule changes to the host repository.
 
 # License
 
