@@ -1,0 +1,75 @@
+name: "Bump Latest Submodule"
+description: "A GitHub Action to bump latest submodule changes triggered by comment in pull request."
+author: "Yaroslav Tarkan <@yatarkan>"
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  bump_latest_submodule:
+    name: Bump Latest Submodule
+    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '/bump:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse action command
+        id: parse_action_command
+        run: |
+          DELIMITER=':'
+          DEFAULT_BUMP_BRANCH='master'
+          
+          readarray -d $DELIMITER -t SPLITTED_COMMANDS <<< ${{ github.event.comment.body }}
+          
+          COMMAND=${SPLITTED_COMMANDS[0]}
+          SUBMODULE_PATH=${SPLITTED_COMMANDS[1]}
+          BUMP_BRANCH=${SPLITTED_COMMANDS[2]}
+
+          if [ $COMMAND != '/bump' ]; then
+            echo "Error: Invalid command $COMMAND"
+            exit 1
+          elif [ -z $SUBMODULE_PATH ]; then
+            echo 'Error: No submodule path provided'
+            exit 1
+          elif [ -z $BUMP_BRANCH ]; then
+            echo "No bump branch provided - using default branch $DEFAULT_BUMP_BRANCH"
+            BUMP_BRANCH=$DEFAULT_BUMP_BRANCH
+          fi
+          echo "##[set-output name=submodule_path;]$SUBMODULE_PATH"
+          echo "##[set-output name=bump_branch;]$BUMP_BRANCH"
+      - name: Fetch latest code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ACTIONS_PAT }}
+          fetch-depth: 0
+          submodules: 'true'
+      - name: Fetch PR source branch name
+        id: fetch_source_branch
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { issue, repository } = context.payload;
+            const [ owner, repo ] = repository.full_name.split('/');
+            const { data: pullRequest } = await github.pulls.get({
+              owner,
+              repo,
+              pull_number: issue.number
+            });
+            const { ref: sourceBranch } = pullRequest.head;
+            console.log(`##[set-output name=branch;]${sourceBranch}`);
+      - name: Checkout to PR branch
+        env:
+          SOURCE_BRANCH: ${{ steps.fetch_source_branch.outputs.branch }}
+        run: git checkout $SOURCE_BRANCH
+      - name: Update submodule
+        run: |
+          SUBMODULE_PATH=${{ steps.parse_action_command.outputs.submodule_path }}
+          cd $SUBMODULE_PATH
+          git rebase ${{ steps.parse_action_command.outputs.bump_branch }}
+          cd ..
+          git add $SUBMODULE_PATH
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Bump latest upstream from submodule $SUBMODULE_PATH"
+          git push
+branding:
+  icon: 'git-commit'  
+  color: 'green'
