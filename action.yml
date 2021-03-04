@@ -12,11 +12,13 @@ jobs:
     steps:
       - name: Parse action command
         id: parse_action_command
+        env:
+          PR_COMMENT: ${{ github.event.comment.body }}
         run: |
           DELIMITER=':'
           DEFAULT_BUMP_BRANCH='master'
           
-          readarray -d $DELIMITER -t SPLITTED_COMMANDS <<< ${{ github.event.comment.body }}
+          readarray -d $DELIMITER -t SPLITTED_COMMANDS <<< $PR_COMMENT
           
           COMMAND=${SPLITTED_COMMANDS[0]}
           SUBMODULE_PATH=${SPLITTED_COMMANDS[1]}
@@ -58,12 +60,13 @@ jobs:
       - name: Checkout to PR branch
         env:
           SOURCE_BRANCH: ${{ steps.fetch_source_branch.outputs.branch }}
+          SUBMODULE_PATH: ${{ steps.parse_action_command.outputs.submodule_path }}
+          BUMP_BRANCH: ${{ steps.parse_action_command.outputs.bump_branch }}
         run: git checkout $SOURCE_BRANCH
       - name: Update submodule
         run: |
-          SUBMODULE_PATH=${{ steps.parse_action_command.outputs.submodule_path }}
           cd $SUBMODULE_PATH
-          git rebase ${{ steps.parse_action_command.outputs.bump_branch }}
+          git rebase $BUMP_BRANCH
           cd ..
           git add $SUBMODULE_PATH
           git config user.name 'github-actions[bot]'
