@@ -1,6 +1,6 @@
 # Bump Latest Submodule
 
-A GitHub Action to bump latest submodule changes triggered by comment in pull request.
+A GitHub Action Workflow to bump latest submodule changes triggered by comment in pull request.
 
 ## Prerequisites
 
