@@ -1,4 +1,4 @@
-name: "Bump Latest Submodule"
+name: "Bump Latest Submodule on PR Comment"
 description: "A GitHub Action to bump latest submodule changes triggered by comment in pull request."
 author: "Yaroslav Tarkan <@yatarkan>"
 on:
@@ -12,13 +12,11 @@ jobs:
     steps:
       - name: Parse action command
         id: parse_action_command
-        env:
-          PR_COMMENT: ${{ github.event.comment.body }}
         run: |
           DELIMITER=':'
           DEFAULT_BUMP_BRANCH='master'
           
-          readarray -d $DELIMITER -t SPLITTED_COMMANDS <<< $PR_COMMENT
+          readarray -d $DELIMITER -t SPLITTED_COMMANDS <<< ${{ github.event.comment.body }}
           
           COMMAND=${SPLITTED_COMMANDS[0]}
           SUBMODULE_PATH=${SPLITTED_COMMANDS[1]}
@@ -58,12 +56,11 @@ jobs:
             const { ref: sourceBranch } = pullRequest.head;
             console.log(`##[set-output name=branch;]${sourceBranch}`);
       - name: Checkout to PR branch
+        run: git checkout ${{ steps.fetch_source_branch.outputs.branch }}
+      - name: Update submodule
         env:
-          SOURCE_BRANCH: ${{ steps.fetch_source_branch.outputs.branch }}
           SUBMODULE_PATH: ${{ steps.parse_action_command.outputs.submodule_path }}
           BUMP_BRANCH: ${{ steps.parse_action_command.outputs.bump_branch }}
-        run: git checkout $SOURCE_BRANCH
-      - name: Update submodule
         run: |
           cd $SUBMODULE_PATH
           git rebase $BUMP_BRANCH
@@ -73,6 +70,3 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m "Bump latest upstream from submodule $SUBMODULE_PATH"
           git push
-branding:
-  icon: 'git-commit'  
-  color: 'green'
